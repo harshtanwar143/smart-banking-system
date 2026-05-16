@@ -1,0 +1,137 @@
+@model SmartBank.Models.DTOs.Transactions.TransactionHistoryDto
+@{
+    ViewData["Title"] = "Statement";
+    var accounts = ViewBag.Accounts as List<SmartBank.Models.DTOs.Accounts.AccountResponseDto>
+                   ?? new List<SmartBank.Models.DTOs.Accounts.AccountResponseDto>();
+    var selected = ViewBag.SelectedAccount as int?;
+}
+
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+        <h1>Account statement</h1>
+        <p>All your transactions in one place.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-controller="Transactions" asp-action="Deposit" class="btn btn-outline-pro">
+            <i class="bi bi-cash-coin me-1"></i>Deposit
+        </a>
+        <a asp-controller="Transactions" asp-action="Transfer" class="btn btn-primary-pro">
+            <i class="bi bi-send me-1"></i>Transfer
+        </a>
+    </div>
+</div>
+
+<!-- Account filter -->
+<div class="card-pro mb-3">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-6">
+            <label class="form-label-pro mb-1">Filter by account</label>
+            <select name="accountId" class="form-select form-control-pro" onchange="this.form.submit()">
+                <option value="">All accounts</option>
+                @foreach (var a in accounts)
+                {
+                    <option value="@a.AccountId" selected="@(selected == a.AccountId)">
+                        @a.AccountType - @a.AccountNumber
+                    </option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <span class="text-muted small">
+                Showing @Model.Transactions.Count of @Model.TotalCount transactions
+            </span>
+        </div>
+    </form>
+</div>
+
+@if (Model.Transactions.Count == 0)
+{
+    <div class="card-pro">
+        <div class="empty-state">
+            <i class="bi bi-receipt"></i>
+            <h6>No transactions yet</h6>
+            <p>Once you deposit, withdraw, or transfer funds, your activity will show up here.</p>
+        </div>
+    </div>
+}
+else
+{
+    <div class="card-pro p-0">
+        <div class="d-flex justify-content-between align-items-center px-3 pt-3">
+            <h6 class="fw-bold mb-0">Recent activity</h6>
+        </div>
+
+        <div class="mt-2">
+            @foreach (var t in Model.Transactions)
+            {
+                var isCredit  = t.TransactionType == "Deposit" || t.TransactionType == "TransferCredit";
+                var isDebit   = t.TransactionType == "Withdrawal" || t.TransactionType == "TransferDebit";
+                var iconCls   = t.TransactionType switch
+                {
+                    "Deposit"        => "deposit",
+                    "TransferCredit" => "deposit",
+                    "Withdrawal"     => "withdraw",
+                    "TransferDebit"  => "withdraw",
+                    _                => "transfer"
+                };
+                var iconChar  = t.TransactionType switch
+                {
+                    "Deposit"        => "bi-arrow-down-left",
+                    "TransferCredit" => "bi-arrow-down-left",
+                    "Withdrawal"     => "bi-arrow-up-right",
+                    "TransferDebit"  => "bi-arrow-up-right",
+                    _                => "bi-arrow-left-right"
+                };
+                var amountCls = isCredit ? "credit" : (isDebit ? "debit" : "");
+                var amountSign = isCredit ? "+" : (isDebit ? "-" : "");
+
+                <div class="txn-row">
+                    <div class="txn-icon @iconCls"><i class="bi @iconChar"></i></div>
+                    <div class="txn-info">
+                        <p class="txn-title">@t.TransactionType</p>
+                        <p class="txn-meta">
+                            @t.AccountNumber &middot; @t.CreatedAt.ToString("dd MMM yyyy, hh:mm tt")
+                            @if (!string.IsNullOrEmpty(t.Description))
+                            {
+                                <br /><span>@t.Description</span>
+                            }
+                            @if (!string.IsNullOrEmpty(t.ReferenceNumber))
+                            {
+                                <br /><span class="text-muted">Ref: @t.ReferenceNumber</span>
+                            }
+                        </p>
+                    </div>
+                    <div class="text-end">
+                        <div class="txn-amount @amountCls">
+                            @amountSign INR @t.Amount.ToString("N2")
+                        </div>
+                        <div class="text-muted small">Bal: INR @t.BalanceAfter.ToString("N2")</div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <nav class="px-3 py-2 border-top">
+                <ul class="pagination pagination-sm justify-content-end mb-0">
+                    @{
+                        var prev = Math.Max(1, Model.Page - 1);
+                        var next = Math.Min(Model.TotalPages, Model.Page + 1);
+                    }
+                    <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
+                        <a class="page-link" asp-action="History"
+                           asp-route-page="@prev" asp-route-accountId="@selected">Prev</a>
+                    </li>
+                    <li class="page-item disabled">
+                        <span class="page-link">Page @Model.Page of @Model.TotalPages</span>
+                    </li>
+                    <li class="page-item @(Model.Page >= Model.TotalPages ? "disabled" : "")">
+                        <a class="page-link" asp-action="History"
+                           asp-route-page="@next" asp-route-accountId="@selected">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        }
+    </div>
+}

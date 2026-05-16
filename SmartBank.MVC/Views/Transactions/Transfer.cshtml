@@ -1,0 +1,102 @@
+@model SmartBank.Models.DTOs.Transactions.TransferRequestDto
+@{
+    ViewData["Title"] = "Transfer Money";
+    var accounts = ViewBag.Accounts as List<SmartBank.Models.DTOs.Accounts.AccountResponseDto>
+                   ?? new List<SmartBank.Models.DTOs.Accounts.AccountResponseDto>();
+}
+
+<div class="page-header">
+    <h1>Transfer money</h1>
+    <p>Send funds to any SmartBank account instantly.</p>
+</div>
+
+<div class="row">
+    <div class="col-lg-7">
+        <div class="card-pro">
+            @if (accounts.Count == 0)
+            {
+                <div class="empty-state">
+                    <i class="bi bi-arrow-left-right"></i>
+                    <h6>No accounts yet</h6>
+                    <p>Open an account to send money.</p>
+                    <a asp-controller="Accounts" asp-action="Open" class="btn btn-primary-pro mt-2">Open an account</a>
+                </div>
+            }
+            else
+            {
+                <form asp-action="Transfer" method="post">
+                    @Html.AntiForgeryToken()
+
+                    @if (ViewData.ModelState.ErrorCount > 0)
+                    {
+                        <div class="alert alert-danger small">
+                            <span asp-validation-summary="All"></span>
+                        </div>
+                    }
+
+                    <div class="mb-3">
+                        <label asp-for="FromAccountId" class="form-label-pro">From account</label>
+                        <select asp-for="FromAccountId" class="form-select form-control-pro">
+                            <option value="">-- Select account --</option>
+                            @foreach (var a in accounts.Where(x => x.Status == "Active"))
+                            {
+                                <option value="@a.AccountId">
+                                    @a.AccountType - @a.AccountNumber (INR @a.Balance.ToString("N2"))
+                                </option>
+                            }
+                        </select>
+                        <span asp-validation-for="FromAccountId" class="field-validation-error"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="ToAccountNumber" class="form-label-pro">To account number</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-bank2 text-muted"></i></span>
+                            <input asp-for="ToAccountNumber" class="form-control form-control-pro"
+                                   placeholder="SB1234567890" maxlength="20" />
+                        </div>
+                        <div class="form-help">Enter the destination SmartBank account number.</div>
+                        <span asp-validation-for="ToAccountNumber" class="field-validation-error"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Amount" class="form-label-pro">Amount (INR)</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light">INR</span>
+                            <input asp-for="Amount" type="number" step="0.01" min="1"
+                                   class="form-control form-control-pro" placeholder="0.00" />
+                        </div>
+                        <span asp-validation-for="Amount" class="field-validation-error"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Remarks" class="form-label-pro">Remarks (optional)</label>
+                        <input asp-for="Remarks" class="form-control form-control-pro"
+                               placeholder="e.g. Rent payment" maxlength="500" />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary-pro">
+                        <i class="bi bi-send me-1"></i>Send money
+                    </button>
+                    <a asp-controller="Accounts" asp-action="Index" class="btn btn-outline-pro">Cancel</a>
+                </form>
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card-pro">
+            <h6 class="fw-bold"><i class="bi bi-shield-lock me-1 text-success"></i>Secure transfer</h6>
+            <ul class="small text-muted ps-3 mb-0">
+                <li class="mb-2">Transfers are atomic - either both accounts update or neither does.</li>
+                <li class="mb-2">A unique reference number is generated for every transfer.</li>
+                <li class="mb-2">Both sender and receiver get notifications instantly.</li>
+                <li class="mb-2">Verify the destination account number carefully - transfers cannot be reversed.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

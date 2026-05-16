@@ -1,0 +1,132 @@
+@model SmartBank.Models.DTOs.Loans.LoanApplicationDto
+@{
+    ViewData["Title"] = "Apply for Loan";
+}
+
+<div class="page-header">
+    <h1>Apply for a loan</h1>
+    <p>Quick and paperless. Get a decision in minutes.</p>
+</div>
+
+<div class="row">
+    <div class="col-lg-7">
+        <div class="card-pro">
+            <form asp-action="Apply" method="post" id="loanForm">
+                @Html.AntiForgeryToken()
+
+                @if (ViewData.ModelState.ErrorCount > 0)
+                {
+                    <div class="alert alert-danger small">
+                        <span asp-validation-summary="All"></span>
+                    </div>
+                }
+
+                <div class="mb-3">
+                    <label asp-for="LoanType" class="form-label-pro">Loan type</label>
+                    <select asp-for="LoanType" class="form-select form-control-pro">
+                        <option value="Personal">Personal Loan</option>
+                        <option value="Home">Home Loan</option>
+                        <option value="Vehicle">Vehicle Loan</option>
+                        <option value="Education">Education Loan</option>
+                        <option value="Business">Business Loan</option>
+                    </select>
+                    <span asp-validation-for="LoanType" class="field-validation-error"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="RequestedAmount" class="form-label-pro">Loan amount (INR)</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light">INR</span>
+                        <input asp-for="RequestedAmount" type="number" id="amountInput" step="1000" min="10000" max="10000000"
+                               class="form-control form-control-pro" placeholder="100000" />
+                    </div>
+                    <div class="form-help">Between INR 10,000 and INR 1,00,00,000.</div>
+                    <span asp-validation-for="RequestedAmount" class="field-validation-error"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="TenureMonths" class="form-label-pro">Tenure (months)</label>
+                    <input asp-for="TenureMonths" type="number" id="tenureInput" min="6" max="360"
+                           class="form-control form-control-pro" placeholder="12" />
+                    <div class="form-help">Between 6 and 360 months.</div>
+                    <span asp-validation-for="TenureMonths" class="field-validation-error"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="Purpose" class="form-label-pro">Purpose of loan</label>
+                    <textarea asp-for="Purpose" class="form-control form-control-pro" rows="3"
+                              placeholder="Briefly describe what the loan will be used for"
+                              maxlength="500"></textarea>
+                    <span asp-validation-for="Purpose" class="field-validation-error"></span>
+                </div>
+
+                <button type="submit" class="btn btn-primary-pro">
+                    <i class="bi bi-check-lg me-1"></i>Submit application
+                </button>
+                <a asp-action="Index" class="btn btn-outline-pro">Cancel</a>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card-pro">
+            <h6 class="fw-bold"><i class="bi bi-calculator me-1 text-primary"></i>Estimated EMI</h6>
+            <div class="text-center my-3">
+                <div class="text-muted small">At assumed 10.5% p.a.</div>
+                <div class="fs-2 fw-bold text-primary" id="emiPreview">INR 0.00</div>
+                <div class="text-muted small">per month</div>
+            </div>
+            <div class="d-flex justify-content-between small">
+                <span class="text-muted">Total interest:</span>
+                <span class="fw-semibold" id="totalInterest">INR 0.00</span>
+            </div>
+            <div class="d-flex justify-content-between small mt-1">
+                <span class="text-muted">Total payable:</span>
+                <span class="fw-semibold" id="totalPayable">INR 0.00</span>
+            </div>
+            <hr />
+            <p class="text-muted small mb-0">
+                Final EMI depends on the actual interest rate at the time of approval.
+            </p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function() {
+            var amount = document.getElementById('amountInput');
+            var tenure = document.getElementById('tenureInput');
+            var emiOut = document.getElementById('emiPreview');
+            var intOut = document.getElementById('totalInterest');
+            var payOut = document.getElementById('totalPayable');
+
+            function format(n) {
+                return 'INR ' + n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+            function calc() {
+                var p = parseFloat(amount.value) || 0;
+                var n = parseInt(tenure.value) || 0;
+                var rate = 10.5 / 100 / 12;
+                if (p <= 0 || n <= 0) {
+                    emiOut.textContent = 'INR 0.00';
+                    intOut.textContent = 'INR 0.00';
+                    payOut.textContent = 'INR 0.00';
+                    return;
+                }
+                var emi = p * rate * Math.pow(1 + rate, n) / (Math.pow(1 + rate, n) - 1);
+                var totalPay = emi * n;
+                var totalInt = totalPay - p;
+                emiOut.textContent = format(emi);
+                intOut.textContent = format(totalInt);
+                payOut.textContent = format(totalPay);
+            }
+            if (amount && tenure) {
+                amount.addEventListener('input', calc);
+                tenure.addEventListener('input', calc);
+                calc();
+            }
+        })();
+    </script>
+}

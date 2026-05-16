@@ -1,0 +1,77 @@
+@model SmartBank.Models.DTOs.Notifications.NotificationListDto
+@{
+    ViewData["Title"] = "Notifications";
+}
+
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+        <h1>Notifications</h1>
+        <p>You have <strong>@Model.UnreadCount</strong> unread @(Model.UnreadCount == 1 ? "notification" : "notifications").</p>
+    </div>
+    @if (Model.UnreadCount > 0)
+    {
+        <form asp-action="MarkAllRead" method="post">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-outline-pro">
+                <i class="bi bi-check-all me-1"></i>Mark all as read
+            </button>
+        </form>
+    }
+</div>
+
+@if (Model.Notifications.Count == 0)
+{
+    <div class="card-pro">
+        <div class="empty-state">
+            <i class="bi bi-bell"></i>
+            <h6>No notifications</h6>
+            <p>You will see updates about your transactions, loans, and tickets here.</p>
+        </div>
+    </div>
+}
+else
+{
+    <div class="card-pro p-0">
+        @foreach (var n in Model.Notifications)
+        {
+            var typeBadge = n.Type switch
+            {
+                "Transaction" => "info",
+                "Loan"        => "success",
+                "Support"     => "warning",
+                _             => "muted"
+            };
+            var iconCls = n.Type switch
+            {
+                "Transaction" => "bi-cash-coin",
+                "Loan"        => "bi-bank",
+                "Support"     => "bi-headset",
+                _             => "bi-bell"
+            };
+            <div class="txn-row @(n.IsRead ? "" : "bg-light")">
+                <div class="txn-icon transfer">
+                    <i class="bi @iconCls"></i>
+                </div>
+                <div class="txn-info">
+                    <p class="txn-title">
+                        @n.Title
+                        @if (!n.IsRead) { <span class="badge-pro warning ms-2">New</span> }
+                    </p>
+                    <p class="txn-meta">
+                        @n.Message
+                        <br /><small class="text-muted">@n.CreatedAt.ToString("dd MMM yyyy hh:mm tt")</small>
+                    </p>
+                </div>
+                <div>
+                    @if (!n.IsRead)
+                    {
+                        <form asp-action="MarkRead" asp-route-id="@n.NotificationId" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-outline-pro">Mark read</button>
+                        </form>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}

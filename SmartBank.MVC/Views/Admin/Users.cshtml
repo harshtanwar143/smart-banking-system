@@ -1,0 +1,162 @@
+@model SmartBank.Models.DTOs.Admin.AdminUserListDto
+@{
+    ViewData["Title"] = "Manage Users";
+}
+
+<div class="page-header">
+    <h1>Manage users</h1>
+    <p>View, freeze or unfreeze user accounts.</p>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-3">
+    <div class="col-md-4">
+        <div class="card-pro d-flex align-items-center">
+            <div class="stat-icon-bubble bg-primary-soft me-3"><i class="bi bi-people"></i></div>
+            <div>
+                <div class="text-muted small">Total users</div>
+                <div class="fw-bold fs-4">@Model.TotalCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card-pro d-flex align-items-center">
+            <div class="stat-icon-bubble bg-success-soft me-3"><i class="bi bi-person-check"></i></div>
+            <div>
+                <div class="text-muted small">Active</div>
+                <div class="fw-bold fs-4">@Model.ActiveCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card-pro d-flex align-items-center">
+            <div class="stat-icon-bubble bg-danger-soft me-3"><i class="bi bi-person-slash"></i></div>
+            <div>
+                <div class="text-muted small">Frozen</div>
+                <div class="fw-bold fs-4">@Model.FrozenCount</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card-pro p-0">
+    @if (Model.Users.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="bi bi-people"></i>
+            <h6>No users found</h6>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>KYC</th>
+                        <th>Accounts</th>
+                        <th>Total balance</th>
+                        <th>Status</th>
+                        <th>Joined</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var u in Model.Users)
+                    {
+                        var statusBadge = u.IsFrozen ? "danger" : (u.IsActive ? "success" : "muted");
+                        var statusText  = u.IsFrozen ? "Frozen" : (u.IsActive ? "Active" : "Inactive");
+
+                        <tr>
+                            <td class="fw-semibold">#@u.UserId</td>
+                            <td>@u.FirstName @u.LastName</td>
+                            <td class="text-muted small">@u.Email</td>
+                            <td><span class="badge-pro muted">@u.Role</span></td>
+                            <td>
+                                @{
+                                    var kycBadge = u.KycStatus switch
+                                    {
+                                        "Verified" => "success",
+                                        "Pending"  => "warning",
+                                        "Rejected" => "danger",
+                                        _          => "muted"
+                                    };
+                                }
+                                <span class="badge-pro @kycBadge">@u.KycStatus</span>
+                            </td>
+                            <td>@u.AccountCount</td>
+                            <td>INR @u.TotalBalance.ToString("N2")</td>
+                            <td><span class="badge-pro @statusBadge">@statusText</span></td>
+                            <td class="text-muted small">@u.CreatedAt.ToString("dd MMM yyyy")</td>
+                            <td>
+                                @if (u.Role == "Customer")
+                                {
+                                    <button class="btn btn-sm @(u.IsFrozen ? "btn-outline-pro" : "btn-outline-danger")"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#freezeModal"
+                                            data-userid="@u.UserId"
+                                            data-username="@u.FirstName @u.LastName"
+                                            data-freeze="@(!u.IsFrozen)">
+                                        <i class="bi @(u.IsFrozen ? "bi-unlock" : "bi-lock")"></i>
+                                        @(u.IsFrozen ? "Unfreeze" : "Freeze")
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<!-- Freeze/Unfreeze modal -->
+<div class="modal fade" id="freezeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form asp-action="FreezeUser" method="post" class="modal-content">
+            @Html.AntiForgeryToken()
+            <div class="modal-header">
+                <h5 class="modal-title" id="freezeTitle">Freeze account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" name="userId" id="modalUserId" />
+                <input type="hidden" name="freeze" id="modalFreeze" />
+                <p>Are you sure you want to <span id="modalAction">freeze</span> the account of <strong id="modalUserName"></strong>?</p>
+                <p class="text-muted small">All accounts owned by this user will be affected, and the user will be notified.</p>
+                <div class="mb-3">
+                    <label class="form-label-pro">Reason (optional)</label>
+                    <textarea name="reason" class="form-control form-control-pro" rows="3" maxlength="500"
+                              placeholder="e.g. Suspicious activity, KYC pending"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-pro" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary-pro">Confirm</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var modal = document.getElementById('freezeModal');
+        if (modal) {
+            modal.addEventListener('show.bs.modal', function(ev) {
+                var btn = ev.relatedTarget;
+                var uid = btn.getAttribute('data-userid');
+                var nm  = btn.getAttribute('data-username');
+                var fr  = btn.getAttribute('data-freeze') === 'True';
+                document.getElementById('modalUserId').value = uid;
+                document.getElementById('modalFreeze').value = fr ? 'true' : 'false';
+                document.getElementById('modalUserName').textContent = nm;
+                document.getElementById('modalAction').textContent = fr ? 'freeze' : 'unfreeze';
+                document.getElementById('freezeTitle').textContent = fr ? 'Freeze account' : 'Unfreeze account';
+            });
+        }
+    </script>
+}

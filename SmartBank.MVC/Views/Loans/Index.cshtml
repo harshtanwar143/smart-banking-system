@@ -1,0 +1,118 @@
+@model SmartBank.Models.DTOs.Loans.LoanListDto
+@{
+    ViewData["Title"] = "My Loans";
+}
+
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+        <h1>My Loans</h1>
+        <p>Track all your loan applications and approvals.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Calculator" class="btn btn-outline-pro">
+            <i class="bi bi-calculator me-1"></i>EMI Calculator
+        </a>
+        <a asp-action="Apply" class="btn btn-primary-pro">
+            <i class="bi bi-plus-lg me-1"></i>Apply for loan
+        </a>
+    </div>
+</div>
+
+@if (Model.Loans.Count == 0)
+{
+    <div class="card-pro">
+        <div class="empty-state">
+            <i class="bi bi-bank"></i>
+            <h6>No loan applications yet</h6>
+            <p>Apply for a personal, home, vehicle, education or business loan.</p>
+            <a asp-action="Apply" class="btn btn-primary-pro mt-2">
+                <i class="bi bi-plus-lg me-1"></i>Apply for your first loan
+            </a>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Stats -->
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <div class="card-pro d-flex align-items-center">
+                <div class="stat-icon-bubble bg-primary-soft me-3"><i class="bi bi-bank"></i></div>
+                <div>
+                    <div class="text-muted small">Total applications</div>
+                    <div class="fw-bold fs-4">@Model.TotalCount</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card-pro d-flex align-items-center">
+                <div class="stat-icon-bubble bg-success-soft me-3"><i class="bi bi-check2-circle"></i></div>
+                <div>
+                    <div class="text-muted small">Approved</div>
+                    <div class="fw-bold fs-4">@Model.Loans.Count(l => l.Status == "Approved")</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card-pro d-flex align-items-center">
+                <div class="stat-icon-bubble bg-warning-soft me-3"><i class="bi bi-hourglass-split"></i></div>
+                <div>
+                    <div class="text-muted small">Pending review</div>
+                    <div class="fw-bold fs-4">@Model.Loans.Count(l => l.Status == "Pending")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-pro p-0">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>Loan ID</th>
+                    <th>Type</th>
+                    <th>Requested</th>
+                    <th>Approved</th>
+                    <th>Tenure</th>
+                    <th>EMI</th>
+                    <th>Status</th>
+                    <th>Applied on</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var l in Model.Loans)
+                {
+                    <tr>
+                        <td class="fw-semibold">#@l.LoanId</td>
+                        <td>@l.LoanType</td>
+                        <td>INR @l.RequestedAmount.ToString("N2")</td>
+                        <td>@(l.ApprovedAmount.HasValue ? $"INR {l.ApprovedAmount:N2}" : "-")</td>
+                        <td>@l.TenureMonths months</td>
+                        <td>@(l.EmiAmount.HasValue ? $"INR {l.EmiAmount:N2}" : "-")</td>
+                        <td>
+                            @{
+                                var badge = l.Status switch
+                                {
+                                    "Approved" => "success",
+                                    "Rejected" => "danger",
+                                    "Pending"  => "warning",
+                                    _          => "muted"
+                                };
+                            }
+                            <span class="badge-pro @badge">@l.Status</span>
+                        </td>
+                        <td class="text-muted small">@l.CreatedAt.ToString("dd MMM yyyy")</td>
+                    </tr>
+                    @if (l.Status == "Rejected" && !string.IsNullOrEmpty(l.RejectionReason))
+                    {
+                        <tr>
+                            <td colspan="8" class="bg-light small text-danger">
+                                <i class="bi bi-info-circle me-1"></i>
+                                <strong>Rejection reason:</strong> @l.RejectionReason
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+}

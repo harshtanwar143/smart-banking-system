@@ -1,0 +1,90 @@
+@{
+    ViewData["Title"] = "EMI Calculator";
+}
+
+<div class="page-header">
+    <h1>EMI Calculator</h1>
+    <p>Calculate your monthly installment for any loan amount.</p>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card-pro">
+            <div class="row g-3">
+                <div class="col-md-12">
+                    <label class="form-label-pro">Loan amount: <span id="amtLabel" class="text-primary fw-bold">INR 5,00,000</span></label>
+                    <input type="range" id="amt" min="10000" max="10000000" step="10000" value="500000" class="form-range" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label-pro">Interest rate (% p.a.): <span id="rateLabel" class="text-primary fw-bold">10.5</span></label>
+                    <input type="range" id="rate" min="6" max="20" step="0.1" value="10.5" class="form-range" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label-pro">Tenure: <span id="tenLabel" class="text-primary fw-bold">60</span> months</label>
+                    <input type="range" id="ten" min="6" max="360" step="6" value="60" class="form-range" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card-pro text-center">
+            <div class="text-muted small">Monthly EMI</div>
+            <div class="display-6 fw-bold text-primary my-2" id="emi">INR 0</div>
+            <div class="row mt-3">
+                <div class="col-6 border-end">
+                    <div class="text-muted small">Total Interest</div>
+                    <div class="fw-semibold" id="ti">INR 0</div>
+                </div>
+                <div class="col-6">
+                    <div class="text-muted small">Total Payable</div>
+                    <div class="fw-semibold" id="tp">INR 0</div>
+                </div>
+            </div>
+        </div>
+        <div class="text-center mt-3">
+            <a asp-action="Apply" class="btn btn-primary-pro">
+                <i class="bi bi-check-lg me-1"></i>Apply for this loan
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function() {
+            var amt = document.getElementById('amt');
+            var rate = document.getElementById('rate');
+            var ten = document.getElementById('ten');
+            var amtL = document.getElementById('amtLabel');
+            var rateL = document.getElementById('rateLabel');
+            var tenL = document.getElementById('tenLabel');
+            var emiO = document.getElementById('emi');
+            var tiO = document.getElementById('ti');
+            var tpO = document.getElementById('tp');
+
+            function fmt(n) {
+                return 'INR ' + Math.round(n).toLocaleString('en-IN');
+            }
+
+            function calc() {
+                var p = parseFloat(amt.value);
+                var r = parseFloat(rate.value) / 100 / 12;
+                var n = parseInt(ten.value);
+                amtL.textContent = 'INR ' + parseInt(p).toLocaleString('en-IN');
+                rateL.textContent = parseFloat(rate.value).toFixed(1);
+                tenL.textContent = n;
+                if (p > 0 && n > 0 && r > 0) {
+                    var emi = p * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
+                    var totalPay = emi * n;
+                    var totalInt = totalPay - p;
+                    emiO.textContent = fmt(emi);
+                    tiO.textContent = fmt(totalInt);
+                    tpO.textContent = fmt(totalPay);
+                }
+            }
+            [amt, rate, ten].forEach(function(el) { el.addEventListener('input', calc); });
+            calc();
+        })();
+    </script>
+}

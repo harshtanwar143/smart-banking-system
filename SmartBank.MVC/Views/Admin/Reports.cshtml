@@ -1,0 +1,180 @@
+@model SmartBank.Models.DTOs.Admin.ReportsDto
+@{
+    ViewData["Title"] = "Reports";
+}
+
+<div class="page-header">
+    <h1>Reports and analytics</h1>
+    <p>SmartBank operational intelligence.</p>
+</div>
+
+<!-- Key stats -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card-pro">
+            <div class="stat-label">Total customers</div>
+            <div class="stat-value">@Model.Stats.TotalUsers.ToString("N0")</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card-pro">
+            <div class="stat-label">Total accounts</div>
+            <div class="stat-value">@Model.Stats.TotalAccounts.ToString("N0")</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card-pro">
+            <div class="stat-label">Aggregate deposits</div>
+            <div class="stat-value">INR @Model.Stats.TotalDeposits.ToString("N0")</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card-pro">
+            <div class="stat-label">Today's volume</div>
+            <div class="stat-value">INR @Model.Stats.TodayVolume.ToString("N0")</div>
+            <div class="stat-trend text-muted">@Model.Stats.TodayTransactions transactions</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Daily summary -->
+    <div class="col-lg-7">
+        <div class="card-pro">
+            <h6 class="fw-bold mb-3">Daily transaction summary (last 7 days)</h6>
+            @if (Model.DailySummary.Any())
+            {
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr class="text-muted small">
+                            <th>Date</th>
+                            <th class="text-end">Txn count</th>
+                            <th class="text-end">Volume (INR)</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            var maxV = Model.DailySummary.Max(d => d.Volume);
+                        }
+                        @foreach (var d in Model.DailySummary)
+                        {
+                            var pct = maxV > 0 ? (double)(d.Volume / maxV) * 100 : 0;
+                            <tr>
+                                <td>@d.Date</td>
+                                <td class="text-end">@d.Count</td>
+                                <td class="text-end fw-semibold">@d.Volume.ToString("N0")</td>
+                                <td style="width: 25%;">
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar bg-primary" style="width: @($"{pct:F0}%")"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state py-3">
+                    <p class="mb-0">No data available.</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Operational health -->
+    <div class="col-lg-5">
+        <div class="card-pro">
+            <h6 class="fw-bold mb-3">Operational health</h6>
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                <div>
+                    <div class="text-muted small">Pending loans</div>
+                    <div class="fw-bold fs-5">@Model.Stats.PendingLoans</div>
+                </div>
+                <span class="badge-pro @(Model.Stats.PendingLoans > 0 ? "warning" : "success")">
+                    @(Model.Stats.PendingLoans > 0 ? "Action needed" : "Clear")
+                </span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                <div>
+                    <div class="text-muted small">Open tickets</div>
+                    <div class="fw-bold fs-5">@Model.Stats.OpenTickets</div>
+                </div>
+                <span class="badge-pro @(Model.Stats.OpenTickets > 0 ? "warning" : "success")">
+                    @(Model.Stats.OpenTickets > 0 ? "Action needed" : "Clear")
+                </span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small">Frozen accounts</div>
+                    <div class="fw-bold fs-5">@Model.Stats.FrozenAccounts</div>
+                </div>
+                <span class="badge-pro @(Model.Stats.FrozenAccounts > 0 ? "danger" : "success")">
+                    @(Model.Stats.FrozenAccounts > 0 ? "Review" : "Clear")
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Low balance accounts -->
+<div class="card-pro mt-4 p-0">
+    <div class="px-3 pt-3">
+        <h6 class="fw-bold mb-0">
+            <i class="bi bi-exclamation-triangle text-warning me-1"></i>
+            Low balance accounts (@Model.LowBalanceAccounts.Count)
+        </h6>
+        <p class="text-muted small mb-0">Accounts at or below 110% of minimum balance.</p>
+    </div>
+
+    @if (Model.LowBalanceAccounts.Count == 0)
+    {
+        <div class="empty-state py-3">
+            <i class="bi bi-check-circle"></i>
+            <p class="mb-0">No accounts with low balance.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>Account</th>
+                        <th>Customer</th>
+                        <th>Email</th>
+                        <th>Type</th>
+                        <th>Balance</th>
+                        <th>Min. balance</th>
+                        <th>Shortfall</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var a in Model.LowBalanceAccounts)
+                    {
+                        var shortfall = a.MinimumBalance - a.Balance;
+                        <tr>
+                            <td class="fw-semibold">@a.AccountNumber</td>
+                            <td>@a.CustomerName</td>
+                            <td class="text-muted small">@a.Email</td>
+                            <td><span class="badge-pro muted">@a.AccountType</span></td>
+                            <td class="text-danger fw-semibold">INR @a.Balance.ToString("N2")</td>
+                            <td>INR @a.MinimumBalance.ToString("N2")</td>
+                            <td>
+                                @if (shortfall > 0)
+                                {
+                                    <span class="text-danger">-INR @shortfall.ToString("N2")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">OK</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

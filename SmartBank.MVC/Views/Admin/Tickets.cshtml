@@ -1,0 +1,123 @@
+@model SmartBank.Models.DTOs.Support.TicketListDto
+@{
+    ViewData["Title"] = "Manage Tickets";
+    var open     = Model.Tickets.Where(t => t.Status != "Resolved" && t.Status != "Closed").ToList();
+    var resolved = Model.Tickets.Where(t => t.Status == "Resolved" || t.Status == "Closed").ToList();
+}
+
+<div class="page-header">
+    <h1>Manage support tickets</h1>
+    <p>@Model.OpenCount open, @Model.ResolvedCount resolved.</p>
+</div>
+
+<!-- Open tickets -->
+<div class="card-pro mb-4">
+    <h6 class="fw-bold mb-3">
+        <i class="bi bi-headset text-warning me-1"></i>
+        Open tickets (@open.Count)
+    </h6>
+
+    @if (open.Count == 0)
+    {
+        <div class="empty-state py-3">
+            <i class="bi bi-check-circle"></i>
+            <p class="mb-0">No open tickets. All caught up.</p>
+        </div>
+    }
+    else
+    {
+        @foreach (var t in open)
+        {
+            var prBadge = t.Priority switch
+            {
+                "High"   => "danger",
+                "Medium" => "warning",
+                "Low"    => "muted",
+                _        => "muted"
+            };
+
+            <div class="border rounded p-3 mb-3 bg-light">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <span class="fw-bold">#@t.TicketId</span>
+                        <span class="badge-pro @prBadge ms-2">@t.Priority</span>
+                        <span class="badge-pro muted ms-1">@t.Category</span>
+                    </div>
+                    <small class="text-muted">@t.CreatedAt.ToString("dd MMM yyyy hh:mm tt")</small>
+                </div>
+                <h6 class="fw-semibold mb-1">@t.Subject</h6>
+                <p class="small text-muted mb-2" style="white-space: pre-wrap;">@t.Description</p>
+
+                <form asp-action="ResolveTicket" method="post" class="d-flex gap-2 align-items-end">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="ticketId" value="@t.TicketId" />
+                    <div class="flex-grow-1">
+                        <input type="text" name="resolution" required maxlength="2000"
+                               class="form-control form-control-sm"
+                               placeholder="Type resolution or response..." />
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-success">
+                        <i class="bi bi-check-lg me-1"></i>Resolve
+                    </button>
+                </form>
+            </div>
+        }
+    }
+</div>
+
+<!-- Resolved tickets -->
+<div class="card-pro p-0">
+    <div class="px-3 pt-3">
+        <h6 class="fw-bold mb-0">Resolved tickets (@resolved.Count)</h6>
+    </div>
+
+    @if (resolved.Count == 0)
+    {
+        <div class="empty-state py-3">
+            <p class="mb-0">No resolved tickets yet.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table-pro">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Subject</th>
+                        <th>Category</th>
+                        <th>Priority</th>
+                        <th>Resolution</th>
+                        <th>Resolved on</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var t in resolved)
+                    {
+                        <tr>
+                            <td class="fw-semibold">#@t.TicketId</td>
+                            <td>@t.Subject</td>
+                            <td><span class="badge-pro muted">@t.Category</span></td>
+                            <td>
+                                @{
+                                    var prB = t.Priority switch
+                                    {
+                                        "High"   => "danger",
+                                        "Medium" => "warning",
+                                        "Low"    => "muted",
+                                        _        => "muted"
+                                    };
+                                }
+                                <span class="badge-pro @prB">@t.Priority</span>
+                            </td>
+                            <td class="text-muted small" style="max-width: 300px; white-space: pre-wrap;">
+                                @t.Resolution
+                            </td>
+                            <td class="text-muted small">@(t.ResolvedAt?.ToString("dd MMM yyyy") ?? "-")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

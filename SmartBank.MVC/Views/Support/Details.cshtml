@@ -1,0 +1,68 @@
+@model SmartBank.Models.DTOs.Support.TicketResponseDto
+@{
+    ViewData["Title"] = $"Ticket #{Model.TicketId}";
+    var statusBadge = Model.Status switch
+    {
+        "Open"       => "warning",
+        "InProgress" => "info",
+        "Resolved"   => "success",
+        "Closed"     => "muted",
+        _            => "muted"
+    };
+}
+
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+        <h1>Ticket #@Model.TicketId</h1>
+        <p>@Model.Subject</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-pro">
+        <i class="bi bi-arrow-left me-1"></i>Back to tickets
+    </a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card-pro">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h5 class="fw-bold mb-1">@Model.Subject</h5>
+                    <small class="text-muted">Raised on @Model.CreatedAt.ToString("dd MMM yyyy hh:mm tt")</small>
+                </div>
+                <span class="badge-pro @statusBadge">@Model.Status</span>
+            </div>
+            <div class="border-top pt-3">
+                <h6 class="text-muted small">Description</h6>
+                <p class="mb-0" style="white-space: pre-wrap;">@Model.Description</p>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.Resolution))
+            {
+                <div class="border-top mt-3 pt-3">
+                    <h6 class="text-success"><i class="bi bi-check-circle me-1"></i>Resolution</h6>
+                    <p class="mb-0" style="white-space: pre-wrap;">@Model.Resolution</p>
+                    @if (Model.ResolvedAt.HasValue)
+                    {
+                        <small class="text-muted">Resolved on @Model.ResolvedAt.Value.ToString("dd MMM yyyy hh:mm tt")</small>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card-pro">
+            <h6 class="fw-bold mb-3">Ticket details</h6>
+            <dl class="mb-0">
+                <dt class="small text-muted">Category</dt>
+                <dd class="fw-semibold">@Model.Category</dd>
+
+                <dt class="small text-muted">Priority</dt>
+                <dd class="fw-semibold">@Model.Priority</dd>
+
+                <dt class="small text-muted">Status</dt>
+                <dd><span class="badge-pro @statusBadge">@Model.Status</span></dd>
+            </dl>
+        </div>
+    </div>
+</div>

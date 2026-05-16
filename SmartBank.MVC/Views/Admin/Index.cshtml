@@ -1,0 +1,162 @@
+@model SmartBank.Models.DTOs.Admin.DashboardStatsDto
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="page-header">
+    <h1>Admin Dashboard</h1>
+    <p>SmartBank operations overview at a glance.</p>
+</div>
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card-pro">
+            <div class="d-flex justify-content-between mb-2">
+                <span class="stat-label">Total Customers</span>
+                <span class="stat-icon-bubble bg-primary-soft"><i class="bi bi-people"></i></span>
+            </div>
+            <div class="stat-value">@Model.TotalUsers.ToString("N0")</div>
+            <div class="stat-trend text-muted">All registered users</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card-pro">
+            <div class="d-flex justify-content-between mb-2">
+                <span class="stat-label">Total Accounts</span>
+                <span class="stat-icon-bubble bg-success-soft"><i class="bi bi-wallet2"></i></span>
+            </div>
+            <div class="stat-value">@Model.TotalAccounts.ToString("N0")</div>
+            <div class="stat-trend text-muted">Across all customers</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card-pro">
+            <div class="d-flex justify-content-between mb-2">
+                <span class="stat-label">Total Deposits</span>
+                <span class="stat-icon-bubble bg-info-soft"><i class="bi bi-cash-stack"></i></span>
+            </div>
+            <div class="stat-value">INR @Model.TotalDeposits.ToString("N0")</div>
+            <div class="stat-trend text-muted">Aggregate balance</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card-pro">
+            <div class="d-flex justify-content-between mb-2">
+                <span class="stat-label">Today's Volume</span>
+                <span class="stat-icon-bubble bg-accent-soft"><i class="bi bi-graph-up"></i></span>
+            </div>
+            <div class="stat-value">INR @Model.TodayVolume.ToString("N0")</div>
+            <div class="stat-trend text-muted">@Model.TodayTransactions transactions today</div>
+        </div>
+    </div>
+</div>
+
+<!-- Action items -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card-pro d-flex align-items-center">
+            <div class="stat-icon-bubble bg-warning-soft me-3"><i class="bi bi-hourglass-split"></i></div>
+            <div class="flex-grow-1">
+                <div class="text-muted small">Pending loans</div>
+                <div class="fw-bold fs-4">@Model.PendingLoans</div>
+            </div>
+            <a asp-action="Loans" class="btn btn-sm btn-outline-pro">Review</a>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card-pro d-flex align-items-center">
+            <div class="stat-icon-bubble bg-info-soft me-3"><i class="bi bi-headset"></i></div>
+            <div class="flex-grow-1">
+                <div class="text-muted small">Open tickets</div>
+                <div class="fw-bold fs-4">@Model.OpenTickets</div>
+            </div>
+            <a asp-action="Tickets" class="btn btn-sm btn-outline-pro">Resolve</a>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card-pro d-flex align-items-center">
+            <div class="stat-icon-bubble bg-danger-soft me-3"><i class="bi bi-shield-exclamation"></i></div>
+            <div class="flex-grow-1">
+                <div class="text-muted small">Frozen accounts</div>
+                <div class="fw-bold fs-4">@Model.FrozenAccounts</div>
+            </div>
+            <a asp-action="Users" class="btn btn-sm btn-outline-pro">Users</a>
+        </div>
+    </div>
+</div>
+
+<!-- Charts and lists -->
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card-pro">
+            <h6 class="fw-bold mb-3">Last 7 days transactions</h6>
+            @if (Model.Last7Days.Any())
+            {
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr class="text-muted small">
+                            <th>Date</th>
+                            <th class="text-end">Count</th>
+                            <th class="text-end">Volume (INR)</th>
+                            <th>Trend</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{ var maxVol = Model.Last7Days.Max(d => d.Volume); }
+                        @foreach (var d in Model.Last7Days)
+                        {
+                            var pct = maxVol > 0 ? (double)(d.Volume / maxVol) * 100 : 0;
+                            <tr>
+                                <td>@d.Date</td>
+                                <td class="text-end">@d.Count</td>
+                                <td class="text-end fw-semibold">@d.Volume.ToString("N0")</td>
+                                <td style="width: 30%;">
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar bg-primary" style="width: @($"{pct:F0}%")"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state py-3">
+                    <i class="bi bi-bar-chart"></i>
+                    <p class="mb-0">No transaction activity in the last 7 days.</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card-pro">
+            <h6 class="fw-bold mb-3">Top accounts by balance</h6>
+            @if (Model.TopAccounts.Any())
+            {
+                @foreach (var a in Model.TopAccounts)
+                {
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="avatar me-3">@a.CustomerName.Substring(0, 1)</div>
+                        <div class="flex-grow-1 min-w-0">
+                            <div class="fw-semibold small text-truncate">@a.CustomerName</div>
+                            <div class="text-muted" style="font-size: 0.7rem;">@a.AccountType - @a.AccountNumber</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold">INR @a.Balance.ToString("N0")</div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state py-3">
+                    <i class="bi bi-wallet2"></i>
+                    <p class="mb-0">No active accounts yet.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>

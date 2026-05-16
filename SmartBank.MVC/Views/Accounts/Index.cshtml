@@ -1,0 +1,93 @@
+@model SmartBank.Models.DTOs.Accounts.AccountListResponseDto
+@{
+    ViewData["Title"] = "My Accounts";
+}
+
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+        <h1>My Accounts</h1>
+        <p>All your SmartBank accounts in one place.</p>
+    </div>
+    <a asp-action="Open" class="btn btn-primary-pro">
+        <i class="bi bi-plus-lg me-1"></i>Open new account
+    </a>
+</div>
+
+@if (Model?.Data is null || Model.Data.Count == 0)
+{
+    <div class="card-pro">
+        <div class="empty-state">
+            <i class="bi bi-wallet2"></i>
+            <h6>No accounts yet</h6>
+            <p>Open a savings or current account to start banking with SmartBank.</p>
+            <a asp-action="Open" class="btn btn-primary-pro mt-2">
+                <i class="bi bi-plus-lg me-1"></i>Open your first account
+            </a>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Total Balance summary -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card-pro d-flex align-items-center">
+                <div class="stat-icon-bubble bg-primary-soft me-3"><i class="bi bi-wallet2"></i></div>
+                <div>
+                    <div class="text-muted small">Total balance across accounts</div>
+                    <div class="fw-bold fs-4">INR @Model.Data.Sum(a => a.Balance).ToString("N2")</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card-pro d-flex align-items-center">
+                <div class="stat-icon-bubble bg-success-soft me-3"><i class="bi bi-piggy-bank"></i></div>
+                <div>
+                    <div class="text-muted small">Active accounts</div>
+                    <div class="fw-bold fs-4">@Model.Data.Count(a => a.Status == "Active")</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card-pro d-flex align-items-center">
+                <div class="stat-icon-bubble bg-warning-soft me-3"><i class="bi bi-cash-stack"></i></div>
+                <div>
+                    <div class="text-muted small">Account types</div>
+                    <div class="fw-bold fs-4">@Model.Data.Select(a => a.AccountType).Distinct().Count()</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account cards -->
+    <div class="row g-4">
+        @foreach (var acct in Model.Data)
+        {
+            var cardCls = acct.Status != "Active" ? "frozen" :
+                          acct.AccountType == "Savings" ? "savings" : "current";
+            <div class="col-md-6 col-xl-4">
+                <div class="account-card @cardCls">
+                    <div class="card-row">
+                        <div>
+                            <div class="card-tag">@acct.AccountType Account</div>
+                            <div class="status-pill mt-1">@acct.Status</div>
+                        </div>
+                        <i class="bi bi-bank2 fs-4 opacity-75"></i>
+                    </div>
+                    <div class="card-balance">INR @acct.Balance.ToString("N2")</div>
+                    <div class="card-number">@acct.AccountNumber</div>
+                    <div class="d-flex gap-2 mt-3 position-relative" style="z-index: 1;">
+                        <a asp-action="Details" asp-route-id="@acct.AccountId"
+                           class="btn btn-sm btn-light text-dark fw-semibold">
+                            <i class="bi bi-eye me-1"></i>Details
+                        </a>
+                        <a asp-controller="Transactions" asp-action="History" asp-route-accountId="@acct.AccountId"
+                           class="btn btn-sm btn-light text-dark fw-semibold">
+                            <i class="bi bi-clock-history me-1"></i>Statement
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

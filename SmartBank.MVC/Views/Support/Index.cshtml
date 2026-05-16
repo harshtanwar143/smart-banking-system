@@ -1,0 +1,108 @@
+@model SmartBank.Models.DTOs.Support.TicketListDto
+@{
+    ViewData["Title"] = "Support";
+}
+
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+        <h1>Support tickets</h1>
+        <p>Need help? We are here for you 24x7.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary-pro">
+        <i class="bi bi-plus-lg me-1"></i>Raise a ticket
+    </a>
+</div>
+
+@if (Model.Tickets.Count == 0)
+{
+    <div class="card-pro">
+        <div class="empty-state">
+            <i class="bi bi-headset"></i>
+            <h6>No tickets yet</h6>
+            <p>Have a question or facing an issue? Raise a support ticket and our team will respond.</p>
+            <a asp-action="Create" class="btn btn-primary-pro mt-2">
+                <i class="bi bi-plus-lg me-1"></i>Raise your first ticket
+            </a>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Stats -->
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <div class="card-pro d-flex align-items-center">
+                <div class="stat-icon-bubble bg-primary-soft me-3"><i class="bi bi-list-ul"></i></div>
+                <div>
+                    <div class="text-muted small">Total tickets</div>
+                    <div class="fw-bold fs-4">@Model.TotalCount</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card-pro d-flex align-items-center">
+                <div class="stat-icon-bubble bg-warning-soft me-3"><i class="bi bi-hourglass-split"></i></div>
+                <div>
+                    <div class="text-muted small">Open</div>
+                    <div class="fw-bold fs-4">@Model.OpenCount</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card-pro d-flex align-items-center">
+                <div class="stat-icon-bubble bg-success-soft me-3"><i class="bi bi-check2-circle"></i></div>
+                <div>
+                    <div class="text-muted small">Resolved</div>
+                    <div class="fw-bold fs-4">@Model.ResolvedCount</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-pro p-0">
+        <table class="table-pro">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Subject</th>
+                    <th>Category</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var t in Model.Tickets)
+                {
+                    var statusBadge = t.Status switch
+                    {
+                        "Open"       => "warning",
+                        "InProgress" => "info",
+                        "Resolved"   => "success",
+                        "Closed"     => "muted",
+                        _            => "muted"
+                    };
+                    var priorityBadge = t.Priority switch
+                    {
+                        "High"   => "danger",
+                        "Medium" => "warning",
+                        "Low"    => "muted",
+                        _        => "muted"
+                    };
+                    <tr>
+                        <td class="fw-semibold">#@t.TicketId</td>
+                        <td>@t.Subject</td>
+                        <td><span class="badge-pro muted">@t.Category</span></td>
+                        <td><span class="badge-pro @priorityBadge">@t.Priority</span></td>
+                        <td><span class="badge-pro @statusBadge">@t.Status</span></td>
+                        <td class="text-muted small">@t.CreatedAt.ToString("dd MMM yyyy")</td>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@t.TicketId" class="btn btn-sm btn-outline-pro">View</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

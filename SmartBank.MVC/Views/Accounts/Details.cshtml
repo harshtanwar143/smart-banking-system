@@ -1,0 +1,84 @@
+@model SmartBank.Models.DTOs.Accounts.AccountResponseDto
+@{
+    ViewData["Title"] = $"Account {Model.AccountNumber}";
+    var acctClass = Model.AccountType switch
+    {
+        "Savings" => "savings",
+        "Current" => "current",
+        _         => ""
+    };
+    var frozenClass = Model.Status == "Frozen" ? "frozen" : "";
+}
+
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+        <h1>Account details</h1>
+        <p>Full information for account @Model.AccountNumber.</p>
+    </div>
+    <a asp-controller="Accounts" asp-action="Index" class="btn btn-outline-pro">
+        <i class="bi bi-arrow-left me-1"></i>Back to accounts
+    </a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="account-card @acctClass @frozenClass">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <div class="account-type">@Model.AccountType Account</div>
+                    <div class="account-number">@Model.AccountNumber</div>
+                </div>
+                @{
+                    var statusBadge = Model.Status switch
+                    {
+                        "Active" => "success",
+                        "Frozen" => "danger",
+                        "Closed" => "muted",
+                        _        => "warning"
+                    };
+                }
+                <span class="badge-pro @statusBadge">@Model.Status</span>
+            </div>
+            <div class="account-balance">INR @Model.Balance.ToString("N2")</div>
+            <div class="text-muted small">Available balance</div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card-pro">
+            <h6 class="fw-bold mb-3">Account information</h6>
+            <dl class="mb-0">
+                <dt class="small text-muted">Account number</dt>
+                <dd class="fw-semibold mb-3">@Model.AccountNumber</dd>
+
+                <dt class="small text-muted">Account type</dt>
+                <dd class="mb-3">@Model.AccountType</dd>
+
+                <dt class="small text-muted">Status</dt>
+                <dd class="mb-3"><span class="badge-pro @statusBadge">@Model.Status</span></dd>
+
+                <dt class="small text-muted">Balance</dt>
+                <dd class="fw-bold mb-3">INR @Model.Balance.ToString("N2")</dd>
+
+                <dt class="small text-muted">Opened on</dt>
+                <dd class="mb-0">@Model.CreatedDate.ToString("dd MMM yyyy hh:mm tt")</dd>
+            </dl>
+        </div>
+
+        <div class="d-flex gap-2 mt-3">
+            @if (Model.Status == "Active")
+            {
+                <a asp-controller="Transactions" asp-action="Deposit" class="btn btn-primary-pro flex-fill">
+                    <i class="bi bi-cash-coin me-1"></i>Deposit
+                </a>
+                <a asp-controller="Transactions" asp-action="Transfer" class="btn btn-outline-pro flex-fill">
+                    <i class="bi bi-send me-1"></i>Transfer
+                </a>
+            }
+            <a asp-controller="Transactions" asp-action="History" asp-route-accountId="@Model.AccountId"
+               class="btn btn-outline-pro flex-fill">
+                <i class="bi bi-clock-history me-1"></i>History
+            </a>
+        </div>
+    </div>
+</div>
