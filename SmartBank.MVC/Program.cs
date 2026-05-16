@@ -1,8 +1,3 @@
-using Microsoft.AspNetCore.DataProtection;
-using System.IO;
-using Microsoft.AspNetCore.HttpOverrides;
-
-
 var builder = WebApplication.CreateBuilder(args);
 
 // ─── MVC ──────────────────────────────────────────────────────────────────────
@@ -23,16 +18,7 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-builder.Services.AddDataProtection()
-    .PersistKeysToFileSystem(new DirectoryInfo("/tmp/keys"));
-
 var app = builder.Build();
-
-app.UseForwardedHeaders(new ForwardedHeadersOptions
-{
-    ForwardedHeaders = ForwardedHeaders.XForwardedFor |
-                        ForwardedHeaders.XForwardedProto
-});
 
 if (!app.Environment.IsDevelopment())
 {
@@ -40,7 +26,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-
+app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseSession();
