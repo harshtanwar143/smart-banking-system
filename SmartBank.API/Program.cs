@@ -116,7 +116,7 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowMVC", policy =>
-        policy.WithOrigins("https://localhost:7100", "http://localhost:5100")
+        policy.WithOrigins("https://localhost:7100", "http://localhost:5100", "https://smartbank-app-i0u2.onrender.com")
               .AllowAnyHeader()
               .AllowAnyMethod());
 });
