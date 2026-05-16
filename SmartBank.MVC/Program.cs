@@ -6,8 +6,7 @@ builder.Services.AddControllersWithViews();
 // ─── HTTP Client → SmartBank API ─────────────────────────────────────────────
 builder.Services.AddHttpClient("SmartBankAPI", client =>
 {
-    var apiBase = builder.Configuration["ApiSettings:BaseUrl"]
-                  ?? "https://localhost:7201/";
+    var apiBase = builder.Configuration["ApiSettings:BaseUrl"];
     client.BaseAddress = new Uri(apiBase);
 });
 
